@@ -1,4 +1,4 @@
-import { createPaymentLink } from "@calcom/app-store/stripepayment/lib/client";
+import { createPaymentLink } from "@calcom/app-store/_utils/payments/createPaymentLink";
 import { sendAwaitingPaymentEmailAndSMS } from "@calcom/emails/email-manager";
 import { getBooking } from "@calcom/features/bookings/lib/payment/getBooking";
 import { AttendeeRepository } from "@calcom/features/bookings/repositories/AttendeeRepository";

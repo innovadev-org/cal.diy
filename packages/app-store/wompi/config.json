@@ -1,0 +1,19 @@
+{
+  "name": "Wompi",
+  "slug": "wompi",
+  "type": "wompi_payment",
+  "logo": "icon.svg",
+  "url": "https://wompi.co",
+  "variant": "payment",
+  "categories": ["payment"],
+  "publisher": "Wompi",
+  "email": "soporte@wompi.co",
+  "description": "Accept Wompi payments for paid bookings in Colombia.",
+  "extendsFeature": "EventType",
+  "isTemplate": false,
+  "__createdUsingCli": true,
+  "imageSrc": "icon.svg",
+  "__template": "event-type-app-card",
+  "dirName": "wompi",
+  "isOAuth": true
+}

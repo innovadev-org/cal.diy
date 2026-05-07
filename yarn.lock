@@ -2153,6 +2153,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@calcom/bold@workspace:packages/app-store/bold":
+  version: 0.0.0-use.local
+  resolution: "@calcom/bold@workspace:packages/app-store/bold"
+  dependencies:
+    "@calcom/lib": "workspace:*"
+    "@calcom/types": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@calcom/btcpayserver@workspace:packages/app-store/btcpayserver":
   version: 0.0.0-use.local
   resolution: "@calcom/btcpayserver@workspace:packages/app-store/btcpayserver"
@@ -3463,6 +3472,15 @@ __metadata:
 "@calcom/whereby@workspace:packages/app-store/whereby":
   version: 0.0.0-use.local
   resolution: "@calcom/whereby@workspace:packages/app-store/whereby"
+  dependencies:
+    "@calcom/lib": "workspace:*"
+    "@calcom/types": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
+"@calcom/wompi@workspace:packages/app-store/wompi":
+  version: 0.0.0-use.local
+  resolution: "@calcom/wompi@workspace:packages/app-store/wompi"
   dependencies:
     "@calcom/lib": "workspace:*"
     "@calcom/types": "workspace:*"
