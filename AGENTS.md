@@ -80,11 +80,23 @@ When a task requires extensive changes, break it into multiple PRs:
 See [agents/commands.md](agents/commands.md) for full reference. Key commands:
 
 ```bash
-yarn type-check:ci --force  # Type check (always run before pushing)
-yarn biome check --write .  # Lint and format
-TZ=UTC yarn test            # Run unit tests
-yarn prisma generate        # Regenerate types after schema changes
+yarn dev                                       # Start @calcom/web dev server
+yarn dev:api                                   # Web + api-proxy
+yarn type-check:ci --force                     # Type check (always run before pushing)
+yarn biome check --write .                     # Lint and format
+TZ=UTC yarn test                               # Run unit tests
+TZ=UTC yarn vitest run path/to/file.test.ts    # Run a single test file
+TZ=UTC yarn vitest run -t "test name"          # Run by test-name match
+yarn tdd                                       # Vitest watch mode
+PLAYWRIGHT_HEADLESS=1 yarn e2e [file.e2e.ts]   # E2E (CI needs `ready-for-e2e` label)
+yarn prisma generate                           # Regenerate types after schema changes
+yarn workspace @calcom/prisma db-migrate       # Local DB migration
+yarn db-seed                                   # Seed DB (creates free:free, pro:pro test users)
+yarn workspace @calcom/<pkg> <script>          # Run a script in one workspace
+yarn app-store:build                           # Rebuild app-store generated files (don't edit *.generated.* directly)
 ```
+
+After Prisma schema changes that affect tRPC types: `yarn prisma generate && cd packages/trpc && yarn build`.
 
 
 ## Boundaries
@@ -139,6 +151,14 @@ packages/lib/                # Shared utilities
 - **Styling**: Tailwind CSS
 - **Testing**: Vitest (unit), Playwright (E2E)
 - **i18n**: next-i18next
+- **Async tasks**: Trigger.dev (set `ENABLE_ASYNC_TASKER="false"` to run taskers inline locally)
+- **DI**: `@evyweb/ioctopus` via `bindModuleToClassOnToken` — see `packages/features/<domain>/di/{*.module.ts,*.container.ts,tokens.ts}`
+
+### Engine requirements
+
+- Node ≥18, Yarn 4.12+, PostgreSQL ≥13
+- `NEXTAUTH_SECRET`: `openssl rand -base64 32`
+- `CALENDSO_ENCRYPTION_KEY`: `openssl rand -base64 24` (must be 32 chars for AES256)
 
 ## Code Examples
 
@@ -242,3 +262,21 @@ For detailed information, see the `agents/` directory:
 - **[agents/rules/](agents/rules/)** - Modular engineering rules
 - **[agents/commands.md](agents/commands.md)** - Complete command reference
 - **[agents/knowledge-base.md](agents/knowledge-base.md)** - Domain knowledge and business rules
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
+
+Key routing rules:
+- Product ideas/brainstorming → invoke /office-hours
+- Strategy/scope → invoke /plan-ceo-review
+- Architecture → invoke /plan-eng-review
+- Design system/plan review → invoke /design-consultation or /plan-design-review
+- Full review pipeline → invoke /autoplan
+- Bugs/errors → invoke /investigate
+- QA/testing site behavior → invoke /qa or /qa-only
+- Code review/diff check → invoke /review
+- Visual polish → invoke /design-review
+- Ship/deploy/PR → invoke /ship or /land-and-deploy
+- Save progress → invoke /context-save
+- Resume context → invoke /context-restore

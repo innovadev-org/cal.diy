@@ -21,6 +21,7 @@ export const AppSettingsComponentsMap = {
 export const EventTypeAddonMap = {
   alby: dynamic(() => import("./alby/components/EventTypeAppCardInterface")),
   basecamp3: dynamic(() => import("./basecamp3/components/EventTypeAppCardInterface")),
+  bold: dynamic(() => import("./bold/components/EventTypeAppCardInterface")),
   btcpayserver: dynamic(() => import("./btcpayserver/components/EventTypeAppCardInterface")),
   closecom: dynamic(() => import("./closecom/components/EventTypeAppCardInterface")),
   databuddy: dynamic(() => import("./databuddy/components/EventTypeAppCardInterface")),
@@ -49,12 +50,14 @@ export const EventTypeAddonMap = {
   ),
   twipla: dynamic(() => import("./twipla/components/EventTypeAppCardInterface")),
   umami: dynamic(() => import("./umami/components/EventTypeAppCardInterface")),
+  wompi: dynamic(() => import("./wompi/components/EventTypeAppCardInterface")),
   "zoho-bigin": dynamic(() => import("./zoho-bigin/components/EventTypeAppCardInterface")),
   zohocrm: dynamic(() => import("./zohocrm/components/EventTypeAppCardInterface")),
 };
 export const EventTypeSettingsMap = {
   alby: dynamic(() => import("./alby/components/EventTypeAppSettingsInterface")),
   basecamp3: dynamic(() => import("./basecamp3/components/EventTypeAppSettingsInterface")),
+  bold: dynamic(() => import("./bold/components/EventTypeAppSettingsInterface")),
   btcpayserver: dynamic(() => import("./btcpayserver/components/EventTypeAppSettingsInterface")),
   databuddy: dynamic(() => import("./databuddy/components/EventTypeAppSettingsInterface")),
   fathom: dynamic(() => import("./fathom/components/EventTypeAppSettingsInterface")),
@@ -67,4 +70,5 @@ export const EventTypeSettingsMap = {
   plausible: dynamic(() => import("./plausible/components/EventTypeAppSettingsInterface")),
   qr_code: dynamic(() => import("./qr_code/components/EventTypeAppSettingsInterface")),
   stripepayment: dynamic(() => import("./stripepayment/components/EventTypeAppSettingsInterface")),
+  wompi: dynamic(() => import("./wompi/components/EventTypeAppSettingsInterface")),
 };

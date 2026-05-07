@@ -9,6 +9,7 @@ import attio_config_json from "./attio/config.json";
 import autocheckin_config_json from "./autocheckin/config.json";
 import baa_for_hipaa_config_json from "./baa-for-hipaa/config.json";
 import basecamp3_config_json from "./basecamp3/config.json";
+import bold_config_json from "./bold/config.json";
 import bolna_config_json from "./bolna/config.json";
 import btcpayserver_config_json from "./btcpayserver/config.json";
 import { metadata as caldavcalendar__metadata_ts } from "./caldavcalendar/_metadata";
@@ -107,6 +108,7 @@ import webex_config_json from "./webex/config.json";
 import whatsapp_config_json from "./whatsapp/config.json";
 import whereby_config_json from "./whereby/config.json";
 import { metadata as wipemycalother__metadata_ts } from "./wipemycalother/_metadata";
+import wompi_config_json from "./wompi/config.json";
 import wordpress_config_json from "./wordpress/config.json";
 import zapier_config_json from "./zapier/config.json";
 import zoho_bigin_config_json from "./zoho-bigin/config.json";
@@ -121,6 +123,7 @@ export const appStoreMetadata = {
   autocheckin: autocheckin_config_json,
   "baa-for-hipaa": baa_for_hipaa_config_json,
   basecamp3: basecamp3_config_json,
+  bold: bold_config_json,
   bolna: bolna_config_json,
   btcpayserver: btcpayserver_config_json,
   caldavcalendar: caldavcalendar__metadata_ts,
@@ -219,6 +222,7 @@ export const appStoreMetadata = {
   whatsapp: whatsapp_config_json,
   whereby: whereby_config_json,
   wipemycalother: wipemycalother__metadata_ts,
+  wompi: wompi_config_json,
   wordpress: wordpress_config_json,
   zapier: zapier_config_json,
   "zoho-bigin": zoho_bigin_config_json,

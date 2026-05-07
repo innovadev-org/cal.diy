@@ -4,6 +4,7 @@
 **/
 import { appDataSchema as alby_zod_ts } from "./alby/zod";
 import { appDataSchema as basecamp3_zod_ts } from "./basecamp3/zod";
+import { appDataSchema as bold_zod_ts } from "./bold/zod";
 import { appDataSchema as btcpayserver_zod_ts } from "./btcpayserver/zod";
 import { appDataSchema as closecom_zod_ts } from "./closecom/zod";
 import { appDataSchema as dailyvideo_zod_ts } from "./dailyvideo/zod";
@@ -46,6 +47,7 @@ import { appDataSchema as twipla_zod_ts } from "./twipla/zod";
 import { appDataSchema as umami_zod_ts } from "./umami/zod";
 import { appDataSchema as vital_zod_ts } from "./vital/zod";
 import { appDataSchema as webex_zod_ts } from "./webex/zod";
+import { appDataSchema as wompi_zod_ts } from "./wompi/zod";
 import { appDataSchema as wordpress_zod_ts } from "./wordpress/zod";
 import { appDataSchema as zapier_zod_ts } from "./zapier/zod";
 import { appDataSchema as zoho_bigin_zod_ts } from "./zoho-bigin/zod";
@@ -55,6 +57,7 @@ import { appDataSchema as zoomvideo_zod_ts } from "./zoomvideo/zod";
 export const appDataSchemas = {
   alby: alby_zod_ts,
   basecamp3: basecamp3_zod_ts,
+  bold: bold_zod_ts,
   btcpayserver: btcpayserver_zod_ts,
   closecom: closecom_zod_ts,
   dailyvideo: dailyvideo_zod_ts,
@@ -97,6 +100,7 @@ export const appDataSchemas = {
   umami: umami_zod_ts,
   vital: vital_zod_ts,
   webex: webex_zod_ts,
+  wompi: wompi_zod_ts,
   wordpress: wordpress_zod_ts,
   zapier: zapier_zod_ts,
   "zoho-bigin": zoho_bigin_zod_ts,
