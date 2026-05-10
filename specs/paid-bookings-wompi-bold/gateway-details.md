@@ -203,21 +203,20 @@ Store only safe checkout data:
 Never store:
 
 - `secretKey`
-- `webhookSecret`
 
 ### Webhook Signature
 
-Bold sends `x-bold-signature`.
+Bold sends `x-bold-signature`. Bold uses the same `identityKey` ("Llave de identidad") for both the payment button and webhook signing. There is no separate webhook secret.
 
 Expected validation:
 
 1. Read raw request body.
 2. Convert raw body string to Base64.
-3. Create HMAC-SHA256 over that Base64 string using webhook secret.
+3. Create HMAC-SHA256 over that Base64 string using `identityKey`.
 4. Return lowercase hex.
 5. Compare with `x-bold-signature` in constant time.
 
-This matches the `payments-hub` implementation in `BoldWebhookHandler.java`.
+Reference: https://developers.bold.co/products/webhook
 
 ### Status Mapping
 

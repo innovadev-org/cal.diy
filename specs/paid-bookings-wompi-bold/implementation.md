@@ -207,9 +207,8 @@ Let users install Bold and configure event-type payment settings.
 
 1. Model Bold credentials with Zod.
 2. Add setup form for:
-   - API key / identity key
+   - identity key (used for both checkout init and webhook signing)
    - secret key
-   - webhook secret
    - environment
 3. Add event settings:
    - enabled
@@ -257,7 +256,7 @@ Create Bold payments and let attendees open Bold checkout.
    - `externalId` equal to the Bold `orderId`
    - `data` containing only public checkout data
 6. Render Bold checkout using the official Bold script or redirect mode.
-7. Do not expose `secretKey` or `webhookSecret`.
+7. Do not expose `secretKey` in serialized props or `Payment.data`.
 
 ### Acceptance Criteria
 
@@ -284,7 +283,7 @@ Confirm Bold payments from server-side events.
 1. Read raw request body.
 2. Validate `x-bold-signature`.
 3. Use Base64(rawBody) as the HMAC message.
-4. Use HMAC-SHA256 with the Bold webhook secret.
+4. Use HMAC-SHA256 with the Bold `identityKey` (Bold reuses the identity key for webhook signing).
 5. Compare in constant time.
 6. Parse event type.
 7. Map success:

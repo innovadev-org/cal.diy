@@ -40,55 +40,51 @@ Only provider webhooks should mark bookings as paid.
 
 Reason: client redirects can be spoofed or arrive before final provider settlement. `handlePaymentSuccess` centralizes the correct booking side effects.
 
+### Wompi Currency Scope (resolved 2026-05-10)
+
+Decision: Support `COP` and `USD` for Wompi in MVP.
+
+Reason: Product confirmed need for both Colombian and international hosts. Requires per-event-type currency selector and validation that the merchant Wompi account has the chosen currency enabled.
+
+Implementation note: signature generation must use the exact uppercase currency code passed to checkout. QA must cover both COP and USD signature paths.
+
+### Bold Currency Scope (resolved 2026-05-10)
+
+Decision: Support only `COP` for Bold in MVP.
+
+Reason: Avoid asymmetric scope across both gateways and reduce QA surface. USD requires Bold merchant account with USD enabled and integrity hash validation per currency. Re-evaluate once a real host requests USD.
+
+### Refund Policy UI (resolved 2026-05-10)
+
+Decision: Hide the refund policy field for Wompi and Bold in MVP.
+
+Reason: `PaymentService.refund()` throws `not implemented`. Showing a configurable refund policy creates a contract the system cannot honor. Re-enable the field when refund APIs are implemented for each gateway.
+
+### Cancelled Booking with Late Payment (resolved 2026-05-10)
+
+Decision: Keep the booking cancelled and log the late payment for manual handling.
+
+Reason: Resurrecting a booking the attendee already cancelled creates surprise. Manual review preserves attendee expectation and gives ops a clear hand-off for refund/reconciliation.
+
+Implementation note: webhook should still ACK 200 to prevent provider retries, update `Payment.data` with the late status, and emit a structured log entry that ops dashboards can pick up.
+
+### Sandbox Credentials (resolved 2026-05-10)
+
+Decision: Use a single shared sandbox account per gateway, credentials stored in the team secret manager (1Password/Vault).
+
+Reason: Balances onboarding friction against consistent QA. Avoid per-developer signups that break when sandbox keys rotate.
+
+Action: ops to provision Wompi and Bold sandbox accounts and document retrieval steps in `junior-runbook.md`. Block manual QA until both are available.
+
+### Team Credentials (resolved 2026-05-10)
+
+Decision: User-level credentials only in MVP.
+
+Reason: Matches existing `RegularBookingService` lookup. Team-level lookup adds priority rules and edge cases that have no validated production demand yet.
+
 ## Open Questions
 
-### Wompi Currency Scope
-
-Owner needed: product/ops.
-
-Question: Should Wompi support only `COP` for MVP?
-
-Recommendation: yes, only `COP`.
-
-### Bold Currency Scope
-
-Owner needed: product/ops.
-
-Question: Should Bold support `COP` only, or `COP` and `USD`?
-
-Recommendation: start with `COP` unless there is a verified production requirement for `USD`.
-
-### Sandbox Credentials
-
-Owner needed: ops.
-
-Question: Who provides sandbox credentials and webhook event secrets for Wompi and Bold?
-
-Recommendation: create shared sandbox accounts before PR 4 and PR 7 manual QA.
-
-### Refund Policy UI
-
-Owner needed: product.
-
-Question: Should refund policy be shown for providers where refund API is not implemented?
-
-Recommendation: hide or disable refund policy for Wompi/Bold MVP, or show it as informational only. Do not promise automatic refunds until implemented.
-
-### Cancelled Booking with Late Payment
-
-Owner needed: product.
-
-Question: If a booking is cancelled while payment is pending, and a later webhook confirms payment, should Cal.diy revive the booking, keep it cancelled, or flag it for manual handling?
-
-Recommendation: keep booking cancelled and log the late payment for manual handling in MVP.
-
-### Team Credentials
-
-Owner needed: engineering lead.
-
-Question: Should Wompi/Bold credentials be user-level only in MVP, or support team credentials immediately?
-
-Recommendation: follow the current payment app credential lookup in `RegularBookingService` and avoid custom team logic until a failing case is found.
+None at this time. Re-open if QA or production reveals a gap.
 
 ## Rejected Options
 

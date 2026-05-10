@@ -98,12 +98,11 @@ Only `publicKey` may be exposed to the browser.
 
 Store in `Credential.key`:
 
-- `apiKey`
+- `identityKey`
 - `secretKey`
-- `webhookSecret`
 - `environment`
 
-Only `apiKey` may be exposed to the browser if required by Bold checkout.
+Only `identityKey` may be exposed to the browser if required by Bold checkout. Bold reuses `identityKey` for webhook HMAC signing — there is no separate webhook secret.
 
 ## API Design
 
@@ -217,7 +216,7 @@ Do not duplicate the booking-confirmation behavior in each gateway. Provider-spe
 ## Security Requirements
 
 - Never expose `credential.key`.
-- Do not store private keys, webhook secrets, or integrity secrets in `Payment.data`.
+- Do not store private keys, identity keys, or integrity secrets in `Payment.data`.
 - Use constant-time comparison for signatures.
 - Read raw body for webhook validation.
 - Enforce `POST` for webhooks.

@@ -161,7 +161,7 @@ Must not contain:
 - Wompi integrity secret.
 - Wompi event secret.
 - Bold secret key.
-- Bold webhook secret.
+- Bold identity key (used for both checkout init and webhook HMAC signing).
 - Any `credential.key`.
 
 Inspect `Payment.data`.

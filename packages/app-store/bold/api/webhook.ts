@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isValidSignature = verifyBoldWebhookSignature({
       rawBody,
       signature,
-      webhookSecret: parsedCredentialKey.data.webhookSecret,
+      webhookSecret: parsedCredentialKey.data.identityKey,
     });
 
     if (!isValidSignature) {

@@ -24,7 +24,6 @@ type EnvironmentOption = {
 const emptyKeyState = {
   identityKey: "",
   secretKey: "",
-  webhookSecret: "",
 };
 
 export default function BoldSetup() {
@@ -112,17 +111,6 @@ export default function BoldSetup() {
               autoComplete="new-password"
               required
               onChange={(event) => setKeyState({ ...keyState, secretKey: event.target.value })}
-            />
-
-            <TextField
-              label={t("bold_webhook_secret")}
-              type="password"
-              name="webhookSecret"
-              id="webhookSecret"
-              value={keyState.webhookSecret}
-              autoComplete="new-password"
-              required
-              onChange={(event) => setKeyState({ ...keyState, webhookSecret: event.target.value })}
             />
 
             <div className="w-60">
