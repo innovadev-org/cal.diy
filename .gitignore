@@ -35,6 +35,17 @@ secrets/
 .env.local
 .env.*.local
 
+# local QA screenshots and playwright artifacts
+.playwright-mcp/
+/admin-apps-*.png
+/bold-*.png
+/booker.png
+/bookings*.png
+/event-apps-tab.png
+/payment-page.png
+/save-result.png
+/wompi-*.png
+
 # debug
 npm-debug.log*
 yarn-debug.log*

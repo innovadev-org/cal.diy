@@ -221,10 +221,10 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
                     <BtcpayPaymentComponent payment={props.payment} paymentPageProps={props} />
                   )}
                   {props.payment.appId === "wompi" && !props.payment.success && (
-                    <WompiPaymentComponent payment={props.payment} />
+                    <WompiPaymentComponent payment={props.payment} paymentPageProps={props} />
                   )}
                   {props.payment.appId === "bold" && !props.payment.success && (
-                    <BoldPaymentComponent payment={props.payment} />
+                    <BoldPaymentComponent payment={props.payment} paymentPageProps={props} />
                   )}
                   {props.payment.refunded && (
                     <div className="mt-4 text-center text-default dark:text-gray-300">{t("refunded")}</div>
