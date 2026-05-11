@@ -51,9 +51,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
     }
 
-    const credentialKey = paymentWithCredentials.booking?.user?.credentials?.[0]?.key;
-    const parsedCredentialKey = boldCredentialKeysSchema.safeParse(credentialKey);
-    if (!parsedCredentialKey.success) {
+    const userCredentials = paymentWithCredentials.booking?.user?.credentials ?? [];
+    const parsedCredentialKey = userCredentials.reduce<ReturnType<typeof boldCredentialKeysSchema.safeParse> | null>(
+      (acc, credential) => {
+        if (acc?.success) return acc;
+        return boldCredentialKeysSchema.safeParse(credential.key);
+      },
+      null
+    );
+    if (!parsedCredentialKey?.success) {
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: Bold credentials not found" });
     }
 
