@@ -11,6 +11,7 @@ import {
 
 describe("Wompi webhook helpers", () => {
   const eventSecret = "test_event_secret";
+  const timestamp = 1530291411;
   const payload = {
     event: "transaction.updated",
     data: {
@@ -31,6 +32,7 @@ describe("Wompi webhook helpers", () => {
       ],
       checksum: "0".repeat(64),
     },
+    timestamp,
   };
 
   it("parses Wompi transaction payloads", () => {
@@ -39,13 +41,26 @@ describe("Wompi webhook helpers", () => {
     expect(getWompiTransaction(parsedPayload)).toEqual(payload.data.transaction);
   });
 
-  it("validates checksum using signature properties relative to data", () => {
-    const checksum = createHash("sha256").update("txn_123APPROVED2500000COPtest_event_secret").digest("hex");
+  it("validates checksum appending the root timestamp between property values and the secret", () => {
+    const checksum = createHash("sha256")
+      .update(`txn_123APPROVED2500000COP${timestamp}test_event_secret`)
+      .digest("hex");
     const parsedPayload = parseWompiWebhookPayload(
       Buffer.from(JSON.stringify({ ...payload, signature: { ...payload.signature, checksum } }))
     );
 
     expect(verifyWompiEventChecksum({ payload: parsedPayload, checksum, eventSecret })).toBe(true);
+  });
+
+  it("rejects checksum when computed without the root timestamp", () => {
+    const wrongChecksum = createHash("sha256")
+      .update("txn_123APPROVED2500000COPtest_event_secret")
+      .digest("hex");
+    const parsedPayload = parseWompiWebhookPayload(Buffer.from(JSON.stringify(payload)));
+
+    expect(verifyWompiEventChecksum({ payload: parsedPayload, checksum: wrongChecksum, eventSecret })).toBe(
+      false
+    );
   });
 
   it("rejects invalid checksums", () => {

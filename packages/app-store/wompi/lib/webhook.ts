@@ -26,6 +26,7 @@ const wompiWebhookPayloadSchema = z
       })
       .passthrough(),
     signature: wompiSignatureSchema.optional(),
+    timestamp: z.union([z.number(), z.string()]).optional(),
   })
   .passthrough();
 
@@ -84,7 +85,13 @@ export function verifyWompiEventChecksum({
 
   if (values.some((value) => value === null)) return false;
 
-  const concatenatedValues = `${values.join("")}${eventSecret}`;
+  // Wompi appends the root-level `timestamp` (unix int) between property values and the secret,
+  // regardless of whether "timestamp" is included in signature.properties.
+  // See: https://docs.wompi.co/en/docs/colombia/eventos/
+  const rootTimestamp = getPathValue(payload, "timestamp");
+  const timestampSegment = rootTimestamp ?? "";
+
+  const concatenatedValues = `${values.join("")}${timestampSegment}${eventSecret}`;
   const computedChecksum = createHash("sha256").update(concatenatedValues).digest("hex");
 
   return constantTimeEqual(computedChecksum, checksum, "hex");
