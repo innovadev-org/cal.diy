@@ -1,9 +1,8 @@
 // `responses` is merged with it during handleNewBooking call because `responses` schema is dynamic and depends on eventType
-import z from "zod";
 
 import { timeZoneSchema } from "@calcom/lib/dayjs/timeZone.schema";
-
 import { CreationSource } from "@calcom/prisma/enums";
+import z from "zod";
 
 export const bookingCreateBodySchema = z.object({
   end: z.string().optional(),
@@ -15,7 +14,7 @@ export const bookingCreateBodySchema = z.object({
   start: z.string(),
   timeZone: timeZoneSchema,
   user: z.union([z.string(), z.array(z.string())]).optional(),
-  language: z.string(),
+  language: z.string().transform(() => "es"),
   bookingUid: z.string().optional(),
   metadata: z.record(z.string()),
   hasHashedBookingLink: z.boolean().optional(),

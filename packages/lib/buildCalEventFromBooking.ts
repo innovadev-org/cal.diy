@@ -1,8 +1,7 @@
 import dayjs from "@calcom/dayjs";
-import type { Prisma } from "@calcom/prisma/client";
-
-import { parseRecurringEvent } from "./isRecurringEvent";
 import { getTranslation } from "@calcom/i18n/server";
+import type { Prisma } from "@calcom/prisma/client";
+import { parseRecurringEvent } from "./isRecurringEvent";
 
 type DestinationCalendar = {
   id: number;
@@ -78,8 +77,8 @@ export const buildCalEventFromBooking = async ({
         email: attendee.email,
         timeZone: attendee.timeZone,
         language: {
-          translate: await getTranslation(attendee.locale ?? "en", "common"),
-          locale: attendee.locale ?? "en",
+          translate: await getTranslation(attendee.locale ?? "es", "common"),
+          locale: attendee.locale ?? "es",
         },
       };
     })

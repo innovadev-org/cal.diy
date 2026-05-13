@@ -56,13 +56,13 @@ async function _buildPersonFromAttendee(
     > | null;
   }
 ) {
-  const translate = await getTranslation(attendee.locale ?? "en", "common");
+  const translate = await getTranslation(attendee.locale ?? "es", "common");
 
   return {
     name: attendee.name ?? "",
     email: attendee.email,
     timeZone: attendee.timeZone,
-    language: { translate, locale: attendee.locale ?? "en" },
+    language: { translate, locale: attendee.locale ?? "es" },
     phoneNumber: attendee.phoneNumber,
     bookingSeat: attendee.bookingSeat,
   } satisfies Person;
