@@ -14,6 +14,7 @@ import {
   getBoldReference,
   getBoldSignatureFromHeader,
   getBoldWebhookAttributes,
+  getBoldWebhookSecret,
   isBoldApprovedType,
   isBoldFailedType,
   parseBoldWebhookPayload,
@@ -107,9 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new HttpCode({ statusCode: 400, message: "Cal.diy: missing Bold signature" });
     }
 
-    // Bold signs webhooks with the merchant secret key (never the browser-exposed
-    // identity key). For test/sandbox credentials Bold signs with an empty secret.
-    const webhookSecret = credentialKey.environment === "production" ? credentialKey.secretKey : "";
+    const webhookSecret = getBoldWebhookSecret(credentialKey);
 
     const isValidSignature = verifyBoldWebhookSignature({
       rawBody,

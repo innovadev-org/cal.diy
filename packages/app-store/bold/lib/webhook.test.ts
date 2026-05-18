@@ -5,6 +5,7 @@ import {
   getBoldReference,
   getBoldSignatureFromHeader,
   getBoldWebhookAttributes,
+  getBoldWebhookSecret,
   isBoldApprovedType,
   isBoldFailedType,
   parseBoldWebhookPayload,
@@ -109,5 +110,15 @@ describe("Bold webhook helpers", () => {
       cardFranchise: "VISA",
       cardCaptureMode: "automatic",
     });
+  });
+});
+
+describe("getBoldWebhookSecret", () => {
+  it("uses the merchant secret key for sandbox (Bold does NOT sign test webhooks with an empty secret)", () => {
+    expect(getBoldWebhookSecret({ secretKey: "sk_test_123", environment: "sandbox" })).toBe("sk_test_123");
+  });
+
+  it("uses the merchant secret key for production", () => {
+    expect(getBoldWebhookSecret({ secretKey: "sk_prod_456", environment: "production" })).toBe("sk_prod_456");
   });
 });

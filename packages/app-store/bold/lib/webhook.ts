@@ -85,6 +85,15 @@ export function verifyBoldWebhookSignature({
   return constantTimeEqual(computedSignature, signature, "hex");
 }
 
+// Bold signs the webhook (x-bold-signature) with the merchant secret key in
+// both test and production — Bold's official plugin verifies test-mode webhooks
+// with the test secret key, NOT an empty string. Returning "" for sandbox makes
+// every sandbox webhook fail signature verification, so the booking is never
+// reconciled. This is intentionally environment-agnostic.
+export function getBoldWebhookSecret(credentialKey: { secretKey: string; environment?: string }): string {
+  return credentialKey.secretKey;
+}
+
 export function getBoldReference(payload: BoldWebhookPayload): string | null {
   return payload.data.metadata.reference ?? null;
 }
