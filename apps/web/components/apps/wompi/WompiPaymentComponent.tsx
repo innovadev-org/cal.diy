@@ -70,7 +70,9 @@ function PaymentChecker(props: PaymentPageProps) {
 
     const interval = setInterval(() => {
       (async () => {
-        if (props.booking.status === "ACCEPTED") return;
+        // Paid events are created with status ACCEPTED while paid is still false,
+        // so gate polling on paid — not status — or the success redirect never fires.
+        if (props.booking.paid) return;
 
         const { booking: bookingResult } = await utils.viewer.bookings.find.fetch({
           bookingUid: props.booking.uid,
