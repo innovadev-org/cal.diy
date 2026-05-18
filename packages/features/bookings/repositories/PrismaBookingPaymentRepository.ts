@@ -1,10 +1,9 @@
 import type { PrismaClient } from "@calcom/prisma";
 import prisma from "@calcom/prisma";
-
 import type {
-  IBookingPaymentRepository,
   BookingPaymentWithCredentials,
   CreatePaymentData,
+  IBookingPaymentRepository,
   PaymentForAwaitingEmail,
 } from "./BookingPaymentRepository.interface";
 
@@ -31,6 +30,18 @@ export class PrismaBookingPaymentRepository implements IBookingPaymentRepository
                 credentials: {
                   where: { type: credentialType },
                   select: { key: true },
+                },
+              },
+            },
+            eventType: {
+              select: {
+                team: {
+                  select: {
+                    credentials: {
+                      where: { type: credentialType },
+                      select: { key: true },
+                    },
+                  },
                 },
               },
             },

@@ -163,6 +163,7 @@
   "payment": "Pago",
   "missing_card_fields": "Faltan campos de la tarjeta",
   "pay_now": "Paga ahora",
+  "pay_with_wompi": "Pagar con Wompi",
   "general_prompt": "Mensaje General",
   "transcription_powered_by_ai": "Transcripción impulsada por IA",
   "start_or_stop_recording": "Iniciar o detener grabación",

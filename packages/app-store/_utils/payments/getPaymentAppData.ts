@@ -1,7 +1,5 @@
-import type { z } from "zod";
-
 import type { EventTypeMetaDataSchema } from "@calcom/prisma/zod-utils";
-
+import type { z } from "zod";
 import type { appDataSchemas } from "../../apps.schemas.generated";
 import type { appDataSchema, paymentOptionEnum } from "../../stripepayment/zod";
 import type { EventTypeAppsList } from "../../utils";
@@ -57,7 +55,16 @@ export function getPaymentAppData(
   for (const appId of paymentAppIds) {
     const appData = getEventTypeAppData(eventType, appId, forcedGet);
     if (appData && paymentAppData === null) {
-      const data = appData as { enabled?: boolean; price?: number; currency?: string; paymentOption?: string; credentialId?: number; refundPolicy?: string; refundDaysCount?: number; refundCountCalendarDays?: boolean };
+      const data = appData as {
+        enabled?: boolean;
+        price?: number;
+        currency?: string;
+        paymentOption?: string;
+        credentialId?: number;
+        refundPolicy?: string;
+        refundDaysCount?: number;
+        refundCountCalendarDays?: boolean;
+      };
       paymentAppData = {
         enabled: data.enabled ?? false,
         price: data.price ?? 0,

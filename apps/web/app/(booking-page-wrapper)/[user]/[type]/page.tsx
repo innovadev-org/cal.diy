@@ -1,5 +1,5 @@
-import { WEBAPP_URL } from "@calcom/lib/constants";
 import { loadTranslations } from "@calcom/i18n/server";
+import { WEBAPP_URL } from "@calcom/lib/constants";
 import { buildLegacyCtx, decodeParams } from "@lib/buildLegacyCtx";
 import { getServerSideProps } from "@server/lib/[user]/[type]/getServerSideProps";
 import type { PageProps } from "app/_types";
@@ -19,18 +19,14 @@ const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Elem
   const legacyCtx = buildLegacyCtx(await headers(), await cookies(), await params, await searchParams);
   const props = await getData(legacyCtx);
 
-  const locale = props.eventData?.interfaceLanguage;
-  if (locale) {
-    const ns = "common";
-    const translations = await loadTranslations(locale, ns);
-    return (
-      <CustomI18nProvider translations={translations} locale={locale} ns={ns}>
-        <LegacyPage {...props} />
-      </CustomI18nProvider>
-    );
-  }
-
-  return <LegacyPage {...props} />;
+  const locale = props.eventData?.interfaceLanguage ?? "es";
+  const ns = "common";
+  const translations = await loadTranslations(locale, ns);
+  return (
+    <CustomI18nProvider translations={translations} locale={locale} ns={ns}>
+      <LegacyPage {...props} />
+    </CustomI18nProvider>
+  );
 };
 
 export const generateMetadata = async ({ params, searchParams }: PageProps): Promise<Metadata> => {

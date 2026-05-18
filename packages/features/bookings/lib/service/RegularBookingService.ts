@@ -1167,7 +1167,7 @@ async function handler(
   const attendeeLanguage = attendeeInfoOnReschedule ? attendeeInfoOnReschedule.locale : language;
   const attendeeTimezone = attendeeInfoOnReschedule ? attendeeInfoOnReschedule.timeZone : reqBody.timeZone;
 
-  const tAttendees = await getTranslation(attendeeLanguage ?? "en", "common");
+  const tAttendees = await getTranslation(attendeeLanguage ?? "es", "common");
 
   const isManagedEventType = !!eventType.parentId;
 

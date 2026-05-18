@@ -1,0 +1,1 @@
+export { wompiCredentialKeysSchema } from "./wompiCredentialKeysSchema";

@@ -1,6 +1,6 @@
 "use client";
 
-import { createPaymentLink } from "@calcom/app-store/stripepayment/lib/client";
+import { createPaymentLink } from "@calcom/app-store/_utils/payments/createPaymentLink";
 import { useHandleBookEvent } from "@calcom/atoms/hooks/bookings/useHandleBookEvent";
 import dayjs from "@calcom/dayjs";
 import { sdkActionManager } from "@calcom/embed-core/embed-iframe";

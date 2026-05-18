@@ -17,12 +17,44 @@ import dynamic from "next/dynamic";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 
-
-type PaymentPageProps = {
-  payment: { id: number; success: boolean; refunded: boolean; amount: number; currency: string; paymentOption: string | null; data: Record<string, unknown>; appId?: string | null };
+export type PaymentPageProps = {
+  payment: {
+    id: number;
+    uid: string;
+    success: boolean;
+    refunded: boolean;
+    amount: number;
+    currency: string;
+    paymentOption: string | null;
+    data: Record<string, unknown>;
+    appId?: string | null;
+  };
   clientSecret?: string | null;
-  booking: { id: number; uid: string; title: string; startTime: string; endTime: string; status: string; paid: boolean; description?: string | null; location?: string | null };
-  eventType: { id: number; title: string; length: number; price: number; currency: string; metadata: Record<string, unknown> | null; successRedirectUrl?: string | null; forwardParamsSuccessRedirect?: boolean | null; recurringEvent?: unknown };
+  booking: {
+    id: number;
+    uid: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    paid: boolean;
+    description?: string | null;
+    location?: string | null;
+    attendees?: Array<{ name: string; email: string; timeZone: string }>;
+    user?: { name: string | null; timeZone: string } | null;
+    responses?: Record<string, unknown>;
+  };
+  eventType: {
+    id: number;
+    title: string;
+    length: number;
+    price: number;
+    currency: string;
+    metadata: Record<string, unknown> | null;
+    successRedirectUrl?: string | null;
+    forwardParamsSuccessRedirect?: boolean | null;
+    recurringEvent?: unknown;
+  };
   profile: { theme?: string | null; hideBranding?: boolean };
   user?: { name?: string | null; username?: string | null } | null;
 };
@@ -55,6 +87,21 @@ const BtcpayPaymentComponent = dynamic(
     import("@calcom/web/components/apps/btcpayserver/BtcpayPaymentComponent").then(
       (m) => m.BtcpayPaymentComponent
     ),
+  {
+    ssr: false,
+  }
+);
+
+const WompiPaymentComponent = dynamic(
+  () =>
+    import("@calcom/web/components/apps/wompi/WompiPaymentComponent").then((m) => m.WompiPaymentComponent),
+  {
+    ssr: false,
+  }
+);
+
+const BoldPaymentComponent = dynamic(
+  () => import("@calcom/web/components/apps/bold/BoldPaymentComponent").then((m) => m.BoldPaymentComponent),
   {
     ssr: false,
   }
@@ -94,6 +141,8 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
   }, [isEmbed, date.tz]);
 
   const eventName = props.booking.title;
+  const paymentCurrency = props.payment.currency || paymentAppData.currency;
+  const paymentOption = props.payment.paymentOption ?? paymentAppData.paymentOption;
 
   return (
     <div className="h-screen">
@@ -114,12 +163,12 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
                 aria-labelledby="modal-headline">
                 <div>
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cal-success">
-                    <PayIcon currency={paymentAppData.currency} className="h-8 w-8 text-green-600" />
+                    <PayIcon currency={paymentCurrency} className="h-8 w-8 text-green-600" />
                   </div>
 
                   <div className="mt-3 text-center sm:mt-5">
                     <h3 className="font-semibold text-2xl text-emphasis leading-6" id="modal-headline">
-                      {paymentAppData.paymentOption === "HOLD" ? t("complete_your_booking") : t("payment")}
+                      {paymentOption === "HOLD" ? t("complete_your_booking") : t("payment")}
                     </h3>
                     <div className="mt-4 grid grid-cols-3 border-t border-b py-4 text-left text-default dark:border-gray-900 dark:text-gray-300">
                       <div className="font-medium">{t("what")}</div>
@@ -140,11 +189,11 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
                         </>
                       )}
                       <div className="font-medium">
-                        {props.payment.paymentOption === "HOLD" ? t("no_show_fee") : t("price")}
+                        {paymentOption === "HOLD" ? t("no_show_fee") : t("price")}
                       </div>
                       <div className="col-span-2 mb-6 font-semibold">
                         <Price
-                          currency={paymentAppData.currency}
+                          currency={paymentCurrency}
                           price={props.payment?.amount ?? paymentAppData.price}
                           displayAlternateSymbol={false}
                         />
@@ -170,6 +219,12 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
                   )}
                   {props.payment.appId === "btcpayserver" && !props.payment.success && (
                     <BtcpayPaymentComponent payment={props.payment} paymentPageProps={props} />
+                  )}
+                  {props.payment.appId === "wompi" && !props.payment.success && (
+                    <WompiPaymentComponent payment={props.payment} paymentPageProps={props} />
+                  )}
+                  {props.payment.appId === "bold" && !props.payment.success && (
+                    <BoldPaymentComponent payment={props.payment} paymentPageProps={props} />
                   )}
                   {props.payment.refunded && (
                     <div className="mt-4 text-center text-default dark:text-gray-300">{t("refunded")}</div>

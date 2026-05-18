@@ -1,3 +1,4 @@
+import process from "node:process";
 import { loadTranslations } from "@calcom/i18n/server";
 import { BookingStatus } from "@calcom/prisma/enums";
 import { buildLegacyCtx } from "@lib/buildLegacyCtx";
@@ -43,17 +44,13 @@ const ServerPage = async ({ params, searchParams }: _PageProps) => {
   const context = buildLegacyCtx(await headers(), await cookies(), await params, await searchParams);
   const props = await getData(context);
 
-  const eventLocale = props.eventType?.interfaceLanguage;
-  if (eventLocale) {
-    const ns = "common";
-    const translations = await loadTranslations(eventLocale, ns);
-    return (
-      <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns}>
-        <OldPage {...props} />
-      </CustomI18nProvider>
-    );
-  }
-
-  return <OldPage {...props} />;
+  const eventLocale = props.eventType?.interfaceLanguage ?? "es";
+  const ns = "common";
+  const translations = await loadTranslations(eventLocale, ns);
+  return (
+    <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns}>
+      <OldPage {...props} />
+    </CustomI18nProvider>
+  );
 };
 export default ServerPage;
