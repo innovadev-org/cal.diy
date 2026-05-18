@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { z } from "zod";
 import appConfig from "../config.json";
 import { boldCredentialKeysSchema } from "./boldCredentialKeysSchema";
+import { BOLD_SUPPORTED_CURRENCY } from "./currencyOptions";
 import { createBoldIntegritySignature, formatBoldAmount } from "./signature";
 
 const log = logger.getSubLogger({ prefix: ["payment-service:bold"] });
@@ -61,6 +62,14 @@ class BoldPaymentService implements IAbstractPaymentService {
       const uid = uuidv4();
       const orderId = uid;
       const currency = payment.currency.toUpperCase();
+
+      if (currency !== BOLD_SUPPORTED_CURRENCY) {
+        throw new ErrorWithCode(
+          ErrorCode.BadRequest,
+          `Bold only supports ${BOLD_SUPPORTED_CURRENCY} payments, but the event is priced in ${currency}`
+        );
+      }
+
       const presentableAmount = convertFromSmallestToPresentableCurrencyUnit(payment.amount, currency);
       const amount = formatBoldAmount(presentableAmount);
       const redirectionUrl = `${WEBAPP_URL}/payment/${uid}`;
