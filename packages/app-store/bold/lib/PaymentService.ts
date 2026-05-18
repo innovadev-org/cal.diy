@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { z } from "zod";
 import appConfig from "../config.json";
 import { boldCredentialKeysSchema } from "./boldCredentialKeysSchema";
-import { BOLD_SUPPORTED_CURRENCY } from "./currencyOptions";
+import { BOLD_SUPPORTED_CURRENCIES } from "./currencyOptions";
 import { createBoldIntegritySignature, formatBoldAmount } from "./signature";
 
 const log = logger.getSubLogger({ prefix: ["payment-service:bold"] });
@@ -63,14 +63,25 @@ class BoldPaymentService implements IAbstractPaymentService {
       const orderId = uid;
       const currency = payment.currency.toUpperCase();
 
-      if (currency !== BOLD_SUPPORTED_CURRENCY) {
+      if (!BOLD_SUPPORTED_CURRENCIES.includes(currency as (typeof BOLD_SUPPORTED_CURRENCIES)[number])) {
         throw new ErrorWithCode(
           ErrorCode.BadRequest,
-          `Bold only supports ${BOLD_SUPPORTED_CURRENCY} payments, but the event is priced in ${currency}`
+          `Bold only supports ${BOLD_SUPPORTED_CURRENCIES.join("/")} payments, but the event is priced in ${currency}`
         );
       }
 
       const presentableAmount = convertFromSmallestToPresentableCurrencyUnit(payment.amount, currency);
+
+      // Bold only accepts integer amounts (no cents). Rounding here would charge
+      // a different amount than Payment.amount, so reject fractional prices and
+      // make the event owner configure a whole amount instead.
+      if (!Number.isInteger(presentableAmount)) {
+        throw new ErrorWithCode(
+          ErrorCode.BadRequest,
+          `Bold requires whole ${currency} amounts without cents, but the event is priced at ${presentableAmount}`
+        );
+      }
+
       const amount = formatBoldAmount(presentableAmount);
       const redirectionUrl = `${WEBAPP_URL}/payment/${uid}`;
       const integritySignature = createBoldIntegritySignature({

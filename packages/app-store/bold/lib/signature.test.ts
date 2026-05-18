@@ -23,9 +23,14 @@ describe("createBoldIntegritySignature", () => {
 });
 
 describe("formatBoldAmount", () => {
-  it("strips trailing decimal zeros from checkout amounts", () => {
+  it("formats amounts as integers with no decimals (Bold requirement)", () => {
     expect(formatBoldAmount(25000)).toBe("25000");
-    expect(formatBoldAmount(25000.5)).toBe("25000.5");
-    expect(formatBoldAmount(25000.25)).toBe("25000.25");
+    expect(formatBoldAmount(100)).toBe("100");
+  });
+
+  it("rounds fractional amounts to the nearest integer", () => {
+    expect(formatBoldAmount(25000.5)).toBe("25001");
+    expect(formatBoldAmount(99.49)).toBe("99");
+    expect(formatBoldAmount(99.5)).toBe("100");
   });
 });
