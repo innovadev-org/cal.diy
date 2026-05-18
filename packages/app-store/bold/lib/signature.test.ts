@@ -53,4 +53,10 @@ describe("formatBoldDescription", () => {
   it("strips URLs (Bold rejects descriptions containing URLs)", () => {
     expect(formatBoldDescription("Meeting https://cal.innovadev.com.co/x details")).toBe("Meeting details");
   });
+
+  it("falls back when the sanitized description is under Bold's 2-char minimum", () => {
+    expect(formatBoldDescription("https://cal.innovadev.com.co/booking")).toBe("Pago");
+    expect(formatBoldDescription("A")).toBe("Pago");
+    expect(formatBoldDescription("")).toBe("Pago");
+  });
 });
