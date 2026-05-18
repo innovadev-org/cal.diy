@@ -65,8 +65,8 @@ const EventTypeAppSettingsInterface: EventTypeAppSettingsComponent = ({
           addOnLeading={<>{getCurrencySymbol(selectedCurrency.value)}</>}
           addOnSuffix={currency.toUpperCase()}
           addOnClassname="h-[38px]"
-          step="0.01"
-          min="0.5"
+          step="1"
+          min="1"
           type="number"
           required
           placeholder={t("price")}

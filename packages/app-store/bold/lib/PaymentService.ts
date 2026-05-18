@@ -71,6 +71,17 @@ class BoldPaymentService implements IAbstractPaymentService {
       }
 
       const presentableAmount = convertFromSmallestToPresentableCurrencyUnit(payment.amount, currency);
+
+      // Bold only accepts integer amounts (no cents). Rounding here would charge
+      // a different amount than Payment.amount, so reject fractional prices and
+      // make the event owner configure a whole amount instead.
+      if (!Number.isInteger(presentableAmount)) {
+        throw new ErrorWithCode(
+          ErrorCode.BadRequest,
+          `Bold requires whole ${currency} amounts without cents, but the event is priced at ${presentableAmount}`
+        );
+      }
+
       const amount = formatBoldAmount(presentableAmount);
       const redirectionUrl = `${WEBAPP_URL}/payment/${uid}`;
       const integritySignature = createBoldIntegritySignature({
