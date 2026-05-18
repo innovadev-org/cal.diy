@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { createBoldIntegritySignature, formatBoldAmount } from "./signature";
+import { createBoldIntegritySignature, formatBoldAmount, formatBoldDescription } from "./signature";
 
 describe("createBoldIntegritySignature", () => {
   it("hashes order id, amount, currency, and secret key in Bold order", () => {
@@ -32,5 +32,25 @@ describe("formatBoldAmount", () => {
     expect(formatBoldAmount(25000.5)).toBe("25001");
     expect(formatBoldAmount(99.49)).toBe("99");
     expect(formatBoldAmount(99.5)).toBe("100");
+  });
+});
+
+describe("formatBoldDescription", () => {
+  it("passes through short descriptions unchanged", () => {
+    expect(formatBoldDescription("Bold QA COP entre Innovadev y Edisson")).toBe(
+      "Bold QA COP entre Innovadev y Edisson"
+    );
+  });
+
+  it("truncates descriptions longer than 100 characters", () => {
+    const title =
+      "Consultoría estratégica para tu negocio entre Innovadev: Solution Partners & Business Automation y Edisson Garcia";
+    const result = formatBoldDescription(title);
+    expect(result.length).toBeLessThanOrEqual(100);
+    expect(result.endsWith("…")).toBe(true);
+  });
+
+  it("strips URLs (Bold rejects descriptions containing URLs)", () => {
+    expect(formatBoldDescription("Meeting https://cal.innovadev.com.co/x details")).toBe("Meeting details");
   });
 });

@@ -13,7 +13,7 @@ import type { z } from "zod";
 import appConfig from "../config.json";
 import { boldCredentialKeysSchema } from "./boldCredentialKeysSchema";
 import { BOLD_SUPPORTED_CURRENCIES } from "./currencyOptions";
-import { createBoldIntegritySignature, formatBoldAmount } from "./signature";
+import { createBoldIntegritySignature, formatBoldAmount, formatBoldDescription } from "./signature";
 
 const log = logger.getSubLogger({ prefix: ["payment-service:bold"] });
 const BOLD_PAYMENT_BUTTON_SCRIPT_URL = "https://checkout.bold.co/library/boldPaymentButton.js";
@@ -95,7 +95,7 @@ class BoldPaymentService implements IAbstractPaymentService {
         currency,
         amount,
         orderId,
-        description: booking.title,
+        description: formatBoldDescription(booking.title),
         redirectionUrl,
         integritySignature,
         scriptUrl: BOLD_PAYMENT_BUTTON_SCRIPT_URL,
