@@ -48,18 +48,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
     }
 
-    const userCredentials = paymentWithCredentials.booking?.user?.credentials ?? [];
-    const parsedCredentialKey = userCredentials.reduce<ReturnType<typeof wompiCredentialKeysSchema.safeParse> | null>(
-      (acc, credential) => {
-        if (acc?.success) return acc;
-        return wompiCredentialKeysSchema.safeParse(credential.key);
-      },
-      null
-    );
-    if (!parsedCredentialKey?.success) {
-      throw new HttpCode({ statusCode: 404, message: "Cal.diy: Wompi credentials not found" });
-    }
-
     const payment = await prisma.payment.findFirst({
       where: {
         externalId: transaction.reference,
@@ -77,6 +65,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
     }
 
+    const checkoutData = isJsonRecord(payment.data) ? payment.data : {};
+    const checkoutPublicKey = typeof checkoutData.publicKey === "string" ? checkoutData.publicKey : null;
+
+    const userCredentials = paymentWithCredentials.booking?.user?.credentials ?? [];
+    const teamCredentials = paymentWithCredentials.booking?.eventType?.team?.credentials ?? [];
+    const parsedCredentials = [...userCredentials, ...teamCredentials].flatMap((credential) => {
+      const result = wompiCredentialKeysSchema.safeParse(credential.key);
+      return result.success ? [result.data] : [];
+    });
+
+    // Pick the credential that actually created this checkout (its public key is
+    // persisted in Payment.data) so a team-owned credential is not shadowed by the
+    // organizer's personal one when both exist.
+    const credentialKey =
+      parsedCredentials.find((data) => data.publicKey === checkoutPublicKey) ?? parsedCredentials[0];
+    if (!credentialKey) {
+      throw new HttpCode({ statusCode: 404, message: "Cal.diy: Wompi credentials not found" });
+    }
+
     const checksum =
       getWompiEventChecksumFromHeader(req.headers["x-event-checksum"]) ?? payload.signature?.checksum;
     if (!checksum) {
@@ -86,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isValidChecksum = verifyWompiEventChecksum({
       payload,
       checksum,
-      eventSecret: parsedCredentialKey.data.eventSecret,
+      eventSecret: credentialKey.eventSecret,
     });
 
     if (!isValidChecksum) {

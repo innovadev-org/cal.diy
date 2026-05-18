@@ -12,6 +12,13 @@ export interface BookingPaymentWithCredentials {
         key: JsonValue;
       }>;
     } | null;
+    eventType: {
+      team: {
+        credentials: Array<{
+          key: JsonValue;
+        }>;
+      } | null;
+    } | null;
   } | null;
 }
 

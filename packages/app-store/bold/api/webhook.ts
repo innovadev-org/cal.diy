@@ -37,10 +37,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const rawBody = await readRawBody(req);
     const payload = parseBoldWebhookPayload(rawBody);
+
+    const isHandledEvent =
+      isBoldApprovedType(payload.type) ||
+      isBoldFailedType(payload.type) ||
+      shouldStoreBoldEventOnly(payload.type);
+
+    // Acknowledge events we intentionally do not act on so Bold stops retrying them.
+    if (!isHandledEvent) {
+      return res.status(200).json({ received: true });
+    }
+
     const reference = getBoldReference(payload);
 
+    // A handled event (e.g. SALE_APPROVED) without a reference cannot be reconciled
+    // to a payment. Returning a non-2xx makes Bold retry instead of silently dropping
+    // a successful payment, which would leave the booking unpaid forever.
     if (!reference) {
-      return res.status(200).json({ received: true });
+      throw new HttpCode({ statusCode: 422, message: "Cal.diy: Bold webhook missing reference" });
     }
 
     const bookingPaymentRepository = new BookingPaymentRepository();
@@ -49,33 +63,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!paymentWithCredentials) {
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
-    }
-
-    const userCredentials = paymentWithCredentials.booking?.user?.credentials ?? [];
-    const parsedCredentialKey = userCredentials.reduce<ReturnType<typeof boldCredentialKeysSchema.safeParse> | null>(
-      (acc, credential) => {
-        if (acc?.success) return acc;
-        return boldCredentialKeysSchema.safeParse(credential.key);
-      },
-      null
-    );
-    if (!parsedCredentialKey?.success) {
-      throw new HttpCode({ statusCode: 404, message: "Cal.diy: Bold credentials not found" });
-    }
-
-    const signature = getBoldSignatureFromHeader(req.headers["x-bold-signature"]);
-    if (!signature) {
-      throw new HttpCode({ statusCode: 400, message: "Cal.diy: missing Bold signature" });
-    }
-
-    const isValidSignature = verifyBoldWebhookSignature({
-      rawBody,
-      signature,
-      webhookSecret: parsedCredentialKey.data.identityKey,
-    });
-
-    if (!isValidSignature) {
-      throw new HttpCode({ statusCode: 400, message: "Cal.diy: invalid Bold signature" });
     }
 
     const payment = await prisma.payment.findFirst({
@@ -93,6 +80,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!payment) {
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
+    }
+
+    const checkoutData = isJsonRecord(payment.data) ? payment.data : {};
+    const checkoutIdentityKey =
+      typeof checkoutData.identityKey === "string" ? checkoutData.identityKey : null;
+
+    const userCredentials = paymentWithCredentials.booking?.user?.credentials ?? [];
+    const teamCredentials = paymentWithCredentials.booking?.eventType?.team?.credentials ?? [];
+    const parsedCredentials = [...userCredentials, ...teamCredentials].flatMap((credential) => {
+      const result = boldCredentialKeysSchema.safeParse(credential.key);
+      return result.success ? [result.data] : [];
+    });
+
+    // Pick the credential that actually created this checkout (its identity key is
+    // persisted in Payment.data) so a team-owned credential is not shadowed by the
+    // organizer's personal one when both exist.
+    const credentialKey =
+      parsedCredentials.find((data) => data.identityKey === checkoutIdentityKey) ?? parsedCredentials[0];
+    if (!credentialKey) {
+      throw new HttpCode({ statusCode: 404, message: "Cal.diy: Bold credentials not found" });
+    }
+
+    const signature = getBoldSignatureFromHeader(req.headers["x-bold-signature"]);
+    if (!signature) {
+      throw new HttpCode({ statusCode: 400, message: "Cal.diy: missing Bold signature" });
+    }
+
+    // Bold signs webhooks with the merchant secret key (never the browser-exposed
+    // identity key). For test/sandbox credentials Bold signs with an empty secret.
+    const webhookSecret = credentialKey.environment === "production" ? credentialKey.secretKey : "";
+
+    const isValidSignature = verifyBoldWebhookSignature({
+      rawBody,
+      signature,
+      webhookSecret,
+    });
+
+    if (!isValidSignature) {
+      throw new HttpCode({ statusCode: 400, message: "Cal.diy: invalid Bold signature" });
     }
 
     if (isBoldApprovedType(payload.type)) {
