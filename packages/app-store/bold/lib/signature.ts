@@ -11,12 +11,20 @@ export function formatBoldAmount(amount: number): string {
 // violating this rejects the whole checkout with a generic-error. Booking
 // titles like "<event> entre <org> y <attendee>" routinely exceed 100 chars.
 const BOLD_DESCRIPTION_MAX_LENGTH = 100;
+const BOLD_DESCRIPTION_MIN_LENGTH = 2;
+const BOLD_DESCRIPTION_FALLBACK = "Pago";
 
 export function formatBoldDescription(description: string): string {
   const withoutUrls = description
     .replace(/https?:\/\/\S+/gi, "")
     .replace(/\s+/g, " ")
     .trim();
+
+  // A title that is empty or a single character after URL stripping would
+  // violate Bold's 2-char minimum and reject the checkout, so fall back.
+  if (withoutUrls.length < BOLD_DESCRIPTION_MIN_LENGTH) {
+    return BOLD_DESCRIPTION_FALLBACK;
+  }
 
   if (withoutUrls.length <= BOLD_DESCRIPTION_MAX_LENGTH) {
     return withoutUrls;
