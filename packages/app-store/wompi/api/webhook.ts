@@ -3,6 +3,8 @@ import { readRawBody } from "@calcom/app-store/_utils/payments/paymentWebhook";
 import { PrismaBookingPaymentRepository as BookingPaymentRepository } from "@calcom/features/bookings/repositories/PrismaBookingPaymentRepository";
 import { IS_PRODUCTION } from "@calcom/lib/constants";
 import { HttpError as HttpCode } from "@calcom/lib/http-error";
+import logger from "@calcom/lib/logger";
+import { safeStringify } from "@calcom/lib/safeStringify";
 import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
 import { distributedTracing } from "@calcom/lib/tracing/factory";
 import prisma from "@calcom/prisma";
@@ -27,6 +29,8 @@ function isJsonRecord(value: Prisma.JsonValue): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const log = logger.getSubLogger({ prefix: ["wompi-webhook"] });
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== "POST") {
@@ -36,6 +40,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const rawBody = await readRawBody(req);
     const payload = parseWompiWebhookPayload(rawBody);
     const transaction = getWompiTransaction(payload);
+
+    log.info(
+      "received",
+      safeStringify({
+        status: transaction.status,
+        hasReference: !!transaction.reference,
+        hasChecksumHeader: !!req.headers["x-event-checksum"],
+      })
+    );
 
     const bookingPaymentRepository = new BookingPaymentRepository();
     const paymentWithCredentials =
@@ -64,6 +77,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!payment) {
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
     }
+
+    log.info(
+      "payment matched",
+      safeStringify({ paymentId: payment.id, bookingId: payment.bookingId, alreadySuccess: payment.success })
+    );
 
     const checkoutData = isJsonRecord(payment.data) ? payment.data : {};
     const checkoutPublicKey = typeof checkoutData.publicKey === "string" ? checkoutData.publicKey : null;
@@ -96,6 +114,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       eventSecret: credentialKey.eventSecret,
     });
 
+    log.info("checksum verified", safeStringify({ valid: isValidChecksum }));
+
     if (!isValidChecksum) {
       throw new HttpCode({ statusCode: 400, message: "Cal.diy: invalid Wompi checksum" });
     }
@@ -115,6 +135,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         appSlug: appConfig.slug,
         traceContext,
       });
+
+      log.info("payment reconciled", safeStringify({ paymentId: payment.id, bookingId: payment.bookingId }));
 
       return res.status(200).json({ success: true });
     }
@@ -142,6 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ received: true });
   } catch (error) {
     const err = getServerErrorFromUnknown(error);
+    log.error("handler error", safeStringify({ statusCode: err.statusCode, message: err.message }));
     return res.status(err.statusCode).send({
       message: err.message,
       stack: IS_PRODUCTION ? undefined : err.cause?.stack,

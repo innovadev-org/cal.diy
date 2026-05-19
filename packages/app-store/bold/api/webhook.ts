@@ -3,6 +3,8 @@ import { readRawBody } from "@calcom/app-store/_utils/payments/paymentWebhook";
 import { PrismaBookingPaymentRepository as BookingPaymentRepository } from "@calcom/features/bookings/repositories/PrismaBookingPaymentRepository";
 import { IS_PRODUCTION } from "@calcom/lib/constants";
 import { HttpError as HttpCode } from "@calcom/lib/http-error";
+import logger from "@calcom/lib/logger";
+import { safeStringify } from "@calcom/lib/safeStringify";
 import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
 import { distributedTracing } from "@calcom/lib/tracing/factory";
 import prisma from "@calcom/prisma";
@@ -30,6 +32,8 @@ function isJsonRecord(value: Prisma.JsonValue): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const log = logger.getSubLogger({ prefix: ["bold-webhook"] });
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== "POST") {
@@ -39,6 +43,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const rawBody = await readRawBody(req);
     const payload = parseBoldWebhookPayload(rawBody);
 
+    log.info(
+      "received",
+      safeStringify({ type: payload.type, hasSignatureHeader: !!req.headers["x-bold-signature"] })
+    );
+
     const isHandledEvent =
       isBoldApprovedType(payload.type) ||
       isBoldFailedType(payload.type) ||
@@ -46,10 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Acknowledge events we intentionally do not act on so Bold stops retrying them.
     if (!isHandledEvent) {
+      log.info("ignored unhandled event type", payload.type);
       return res.status(200).json({ received: true });
     }
 
     const reference = getBoldReference(payload);
+    log.info("reference resolved", safeStringify({ hasReference: !!reference }));
 
     // A handled event (e.g. SALE_APPROVED) without a reference cannot be reconciled
     // to a payment. Returning a non-2xx makes Bold retry instead of silently dropping
@@ -83,6 +94,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: payment not found" });
     }
 
+    log.info(
+      "payment matched",
+      safeStringify({ paymentId: payment.id, bookingId: payment.bookingId, alreadySuccess: payment.success })
+    );
+
     const checkoutData = isJsonRecord(payment.data) ? payment.data : {};
     const checkoutIdentityKey =
       typeof checkoutData.identityKey === "string" ? checkoutData.identityKey : null;
@@ -103,6 +119,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new HttpCode({ statusCode: 404, message: "Cal.diy: Bold credentials not found" });
     }
 
+    log.info(
+      "credential selected",
+      safeStringify({
+        candidates: parsedCredentials.length,
+        identityKeyMatched: parsedCredentials.some((data) => data.identityKey === checkoutIdentityKey),
+        environment: credentialKey.environment,
+      })
+    );
+
     const signature = getBoldSignatureFromHeader(req.headers["x-bold-signature"]);
     if (!signature) {
       throw new HttpCode({ statusCode: 400, message: "Cal.diy: missing Bold signature" });
@@ -115,6 +140,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       signature,
       webhookSecret,
     });
+
+    log.info("signature verified", safeStringify({ valid: isValidSignature }));
 
     if (!isValidSignature) {
       throw new HttpCode({ statusCode: 400, message: "Cal.diy: invalid Bold signature" });
@@ -135,6 +162,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         appSlug: appConfig.slug,
         traceContext,
       });
+
+      log.info("payment reconciled", safeStringify({ paymentId: payment.id, bookingId: payment.bookingId }));
 
       return res.status(200).json({ success: true });
     }
@@ -158,6 +187,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ received: true });
   } catch (error) {
     const err = getServerErrorFromUnknown(error);
+    log.error("handler error", safeStringify({ statusCode: err.statusCode, message: err.message }));
     return res.status(err.statusCode).send({
       message: err.message,
       stack: IS_PRODUCTION ? undefined : err.cause?.stack,
