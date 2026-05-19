@@ -85,13 +85,14 @@ export function verifyBoldWebhookSignature({
   return constantTimeEqual(computedSignature, signature, "hex");
 }
 
-// Bold signs the webhook (x-bold-signature) with the merchant secret key in
-// both test and production — Bold's official plugin verifies test-mode webhooks
-// with the test secret key, NOT an empty string. Returning "" for sandbox makes
-// every sandbox webhook fail signature verification, so the booking is never
-// reconciled. This is intentionally environment-agnostic.
+// Bold signs the webhook (x-bold-signature) with an EMPTY key in sandbox and
+// with the merchant secret key only in production. Per Bold's official webhook
+// docs (developers.bold.co/webhook): "in sandbox mode the signature uses an
+// empty key ... the attribute where your LLAVE_SECRETA goes should be an empty
+// String". Verified live: using the real secretKey in sandbox produces a
+// signature mismatch (400) so the booking never reconciles.
 export function getBoldWebhookSecret(credentialKey: { secretKey: string; environment?: string }): string {
-  return credentialKey.secretKey;
+  return credentialKey.environment === "production" ? credentialKey.secretKey : "";
 }
 
 export function getBoldReference(payload: BoldWebhookPayload): string | null {
