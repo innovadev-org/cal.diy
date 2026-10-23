@@ -17,6 +17,7 @@ import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowE
 import {
   ENABLE_PROFILE_SWITCHER,
   GOOGLE_CALENDAR_SCOPES,
+  GOOGLE_MEET_SCOPES,
   GOOGLE_OAUTH_SCOPES,
   HOSTED_CAL_FEATURES,
   IS_CALCOM,
@@ -50,6 +51,7 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers/index";
 import { getOrgUsernameFromEmail } from "../signup/utils/getOrgUsernameFromEmail";
+import { getAuthentikProvider } from "./authentik";
 import { dub } from "./dub";
 import { ErrorCode } from "./ErrorCode";
 import CalComAdapter from "./next-auth-custom-adapter";
@@ -100,6 +102,10 @@ const { client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET } =
   JSON.parse(GOOGLE_API_CREDENTIALS)?.web || {};
 const GOOGLE_LOGIN_ENABLED = process.env.GOOGLE_LOGIN_ENABLED === "true";
 const IS_GOOGLE_LOGIN_ENABLED = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_LOGIN_ENABLED);
+const AUTHENTIK_CLIENT_ID = process.env.AUTHENTIK_CLIENT_ID;
+const AUTHENTIK_CLIENT_SECRET = process.env.AUTHENTIK_CLIENT_SECRET;
+const AUTHENTIK_ISSUER = process.env.AUTHENTIK_ISSUER;
+const IS_AUTHENTIK_LOGIN_ENABLED = !!(AUTHENTIK_CLIENT_ID && AUTHENTIK_CLIENT_SECRET && AUTHENTIK_ISSUER);
 const ORGANIZATIONS_AUTOLINK =
   process.env.ORGANIZATIONS_AUTOLINK === "1" || process.env.ORGANIZATIONS_AUTOLINK === "true";
 
@@ -321,7 +327,7 @@ if (IS_GOOGLE_LOGIN_ENABLED) {
       allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
-          scope: [...GOOGLE_OAUTH_SCOPES, ...GOOGLE_CALENDAR_SCOPES].join(" "),
+          scope: [...GOOGLE_OAUTH_SCOPES, ...GOOGLE_CALENDAR_SCOPES, ...GOOGLE_MEET_SCOPES].join(" "),
           access_type: "offline",
           prompt: "consent",
         },
@@ -352,6 +358,16 @@ if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
           image: null,
         };
       },
+    })
+  );
+}
+
+if (IS_AUTHENTIK_LOGIN_ENABLED) {
+  providers.push(
+    getAuthentikProvider({
+      clientId: AUTHENTIK_CLIENT_ID,
+      clientSecret: AUTHENTIK_CLIENT_SECRET,
+      issuer: AUTHENTIK_ISSUER,
     })
   );
 }
@@ -603,7 +619,7 @@ export const getOptions = ({
             userId: Number(user.id),
             appId: "google-calendar",
           })) &&
-          GOOGLE_CALENDAR_SCOPES.every((scope) => grantedScopes.includes(scope))
+          [...GOOGLE_CALENDAR_SCOPES, ...GOOGLE_MEET_SCOPES].every((scope) => grantedScopes.includes(scope))
         ) {
           // Installing Google Calendar by default
           const credentialkey = {

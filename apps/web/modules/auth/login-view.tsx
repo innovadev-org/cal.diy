@@ -1,5 +1,6 @@
 "use client";
 
+import process from "node:process";
 import { ErrorCode } from "@calcom/features/auth/lib/ErrorCode";
 import { HOSTED_CAL_FEATURES, WEBAPP_URL, WEBSITE_URL } from "@calcom/lib/constants";
 import { emailRegex } from "@calcom/lib/emailSchema";
@@ -36,13 +37,9 @@ interface LoginValues {
   csrfToken: string;
 }
 
-const MicrosoftIcon = () => (
-  <img className="size-4" src="/microsoft-logo.svg" alt="" />
-);
+const MicrosoftIcon = () => <img className="size-4" src="/microsoft-logo.svg" alt="" />;
 
-const GoogleIcon = () => (
-  <img className="size-4" src="/google-icon-colored.svg" alt="" />
-);
+const GoogleIcon = () => <img className="size-4" src="/google-icon-colored.svg" alt="" />;
 
 function BackgroundGrid() {
   const rows = 9;
@@ -103,6 +100,7 @@ function BackgroundGrid() {
 export type PageProps = inferSSRProps<typeof getServerSideProps>;
 export default function Login({
   csrfToken,
+  isAuthentikLoginEnabled,
   isGoogleLoginEnabled,
   isOutlookLoginEnabled,
   totpEmail,
@@ -170,7 +168,7 @@ export default function Login({
     else setErrorMessage(errorMessages[res.error] || t("something_went_wrong"));
   };
 
-  const showSocialLogin = isGoogleLoginEnabled || isOutlookLoginEnabled;
+  const showSocialLogin = isAuthentikLoginEnabled || isGoogleLoginEnabled || isOutlookLoginEnabled;
   const showSignupLink =
     process.env.NEXT_PUBLIC_DISABLE_SIGNUP !== "true" && searchParams?.get("register") !== "false";
 
@@ -196,6 +194,22 @@ export default function Login({
             {!twoFactorRequired && showSocialLogin && (
               <>
                 <div className="flex flex-col gap-2">
+                  {isAuthentikLoginEnabled && (
+                    <Button
+                      className="w-full py-1"
+                      disabled={formState.isSubmitting}
+                      data-testid="authentik"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        setLastUsed("saml");
+                        await signIn("saml-idp", {
+                          callbackUrl,
+                        });
+                      }}>
+                      <span>{t("signin_with_saml_oidc")}</span>
+                      {lastUsed === "saml" && <LastUsed />}
+                    </Button>
+                  )}
                   {isGoogleLoginEnabled && (
                     <Button
                       className="w-full py-1"

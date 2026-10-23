@@ -22,9 +22,9 @@ import type { CredentialForCalendarServiceWithEmail } from "@calcom/types/Creden
 import type { calendar_v3 } from "@googleapis/calendar";
 import type { GaxiosResponse } from "googleapis-common";
 import { RRule } from "rrule";
-
 import { AxiosLikeResponseToFetchResponse } from "../../_utils/oauth/AxiosLikeResponseToFetchResponse";
 import { CalendarAuth } from "./CalendarAuth";
+import { enableAutomaticGoogleMeetArtifacts } from "./GoogleMeetArtifacts";
 
 type FreeBusyArgs = { timeMin: string; timeMax: string; items: { id: string }[] };
 
@@ -119,6 +119,24 @@ class GoogleCalendarService implements Calendar {
   public async authedCalendar(): Promise<calendar_v3.Calendar> {
     this.log.debug("Getting authed calendar");
     return this.auth.getClient();
+  }
+
+  private async enableAutomaticMeetArtifacts(hangoutLink: string): Promise<string[]> {
+    try {
+      await enableAutomaticGoogleMeetArtifacts({
+        authClient: await this.auth.getAuthClient(),
+        hangoutLink,
+      });
+      return [];
+    } catch (error) {
+      this.log.error("Failed to enable automatic Google Meet artifacts", {
+        credentialId: this.credential.id,
+        message: error instanceof Error ? error.message : "Unknown Google Meet API error",
+      });
+      return [
+        "Google Meet was created, but automatic recording, transcription, and notes could not be enabled. Reconnect Google Calendar or verify the Workspace license.",
+      ];
+    }
   }
 
   private getAttendees = ({
@@ -239,6 +257,7 @@ class GoogleCalendarService implements Calendar {
     try {
       let event: calendar_v3.Schema$Event | undefined;
       let recurringEventId = null;
+      let artifactWarnings: string[] = [];
       if (calEvent.existingRecurringEvent) {
         recurringEventId = calEvent.existingRecurringEvent.recurringEventId;
         const recurringEventInstances = await calendar.events.instances({
@@ -318,6 +337,10 @@ class GoogleCalendarService implements Calendar {
         });
       }
 
+      if (calEvent.location === MeetLocationType && event?.hangoutLink) {
+        artifactWarnings = await this.enableAutomaticMeetArtifacts(event.hangoutLink);
+      }
+
       return {
         uid: "",
         ...event,
@@ -325,6 +348,7 @@ class GoogleCalendarService implements Calendar {
         thirdPartyRecurringEventId: recurringEventId,
         additionalInfo: {
           hangoutLink: event?.hangoutLink || "",
+          calWarnings: artifactWarnings,
         },
         type: "google_calendar",
         password: "",
