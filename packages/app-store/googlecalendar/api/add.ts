@@ -1,11 +1,14 @@
-import { OAuth2Client } from "googleapis-common";
-import type { NextApiRequest, NextApiResponse } from "next";
-
-import { GOOGLE_CALENDAR_SCOPES, SCOPE_USERINFO_PROFILE, WEBAPP_URL_FOR_OAUTH } from "@calcom/lib/constants";
+import {
+  GOOGLE_CALENDAR_SCOPES,
+  GOOGLE_MEET_SCOPES,
+  SCOPE_USERINFO_PROFILE,
+  WEBAPP_URL_FOR_OAUTH,
+} from "@calcom/lib/constants";
 import { HttpError } from "@calcom/lib/http-error";
 import { defaultHandler } from "@calcom/lib/server/defaultHandler";
 import { defaultResponder } from "@calcom/lib/server/defaultResponder";
-
+import { OAuth2Client } from "googleapis-common";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { encodeOAuthState } from "../../_utils/oauth/encodeOAuthState";
 import { getGoogleAppKeys } from "../lib/getGoogleAppKeys";
 
@@ -28,7 +31,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
-    scope: [SCOPE_USERINFO_PROFILE, ...GOOGLE_CALENDAR_SCOPES],
+    scope: [SCOPE_USERINFO_PROFILE, ...GOOGLE_CALENDAR_SCOPES, ...GOOGLE_MEET_SCOPES],
     // A refresh token is only returned the first time the user
     // consents to providing access.  For illustration purposes,
     // setting the prompt to 'consent' will force this consent
