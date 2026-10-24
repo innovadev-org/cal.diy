@@ -366,7 +366,7 @@ const emailProvider = EmailProvider({
 });
 
 const getProviders = (): Provider[] => {
-  const runtimeEnv = process.env;
+  const runtimeEnv = globalThis.process.env;
   const clientId = runtimeEnv["AUTHENTIK_CLIENT_ID"];
   const clientSecret = runtimeEnv["AUTHENTIK_CLIENT_SECRET"];
   const issuer = runtimeEnv["AUTHENTIK_ISSUER"];
