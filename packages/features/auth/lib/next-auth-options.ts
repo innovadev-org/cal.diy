@@ -102,6 +102,10 @@ const { client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET } =
   JSON.parse(GOOGLE_API_CREDENTIALS)?.web || {};
 const GOOGLE_LOGIN_ENABLED = process.env.GOOGLE_LOGIN_ENABLED === "true";
 const IS_GOOGLE_LOGIN_ENABLED = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_LOGIN_ENABLED);
+const AUTHENTIK_CLIENT_ID = process.env.AUTHENTIK_CLIENT_ID;
+const AUTHENTIK_CLIENT_SECRET = process.env.AUTHENTIK_CLIENT_SECRET;
+const AUTHENTIK_ISSUER = process.env.AUTHENTIK_ISSUER;
+const IS_AUTHENTIK_LOGIN_ENABLED = !!(AUTHENTIK_CLIENT_ID && AUTHENTIK_CLIENT_SECRET && AUTHENTIK_ISSUER);
 const ORGANIZATIONS_AUTOLINK =
   process.env.ORGANIZATIONS_AUTOLINK === "1" || process.env.ORGANIZATIONS_AUTOLINK === "true";
 
@@ -358,27 +362,24 @@ if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
   );
 }
 
-const emailProvider = EmailProvider({
-  type: "email",
-  maxAge: 10 * 60 * 60, // Magic links are valid for 10 min only
-  // Here we setup the sendVerificationRequest that calls the email template with the identifier (email) and token to verify.
-  sendVerificationRequest: async (props) => (await import("./sendVerificationRequest")).default(props),
-});
+if (IS_AUTHENTIK_LOGIN_ENABLED) {
+  providers.push(
+    getAuthentikProvider({
+      clientId: AUTHENTIK_CLIENT_ID,
+      clientSecret: AUTHENTIK_CLIENT_SECRET,
+      issuer: AUTHENTIK_ISSUER,
+    })
+  );
+}
 
-const getProviders = (): Provider[] => {
-  const runtimeEnv = globalThis.process.env;
-  const clientId = runtimeEnv["AUTHENTIK_CLIENT_ID"];
-  const clientSecret = runtimeEnv["AUTHENTIK_CLIENT_SECRET"];
-  const issuer = runtimeEnv["AUTHENTIK_ISSUER"];
-  const runtimeProviders = [...providers];
-
-  if (clientId && clientSecret && issuer) {
-    runtimeProviders.push(getAuthentikProvider({ clientId, clientSecret, issuer }));
-  }
-
-  runtimeProviders.push(emailProvider);
-  return runtimeProviders;
-};
+providers.push(
+  EmailProvider({
+    type: "email",
+    maxAge: 10 * 60 * 60, // Magic links are valid for 10 min only
+    // Here we setup the sendVerificationRequest that calls the email template with the identifier (email) and token to verify.
+    sendVerificationRequest: async (props) => (await import("./sendVerificationRequest")).default(props),
+  })
+);
 
 function isNumber(n: string) {
   return !Number.isNaN(parseFloat(n)) && !Number.isNaN(+n);
@@ -428,7 +429,7 @@ export const getOptions = ({
     verifyRequest: "/auth/verify",
     // newUser: "/auth/new", // New users will be directed here on first sign in (leave the property out if not of interest)
   },
-  providers: getProviders(),
+  providers,
   callbacks: {
     async jwt({
       // Always available but with a little difference in value
